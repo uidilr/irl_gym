@@ -2,9 +2,7 @@ import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
 
-from rllab.misc import logger
-
-from inverse_rl.envs.dynamic_mjc.mjc_models import point_mass_maze
+from irl_envs.envs.dynamic_mjc.mjc_models import point_mass_maze
 
 
 class PointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
@@ -22,7 +20,7 @@ class PointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         with model.asfile() as f:
             mujoco_env.MujocoEnv.__init__(self, f.name, 5)
 
-    def _step(self, a):
+    def step(self, a):
         vec_dist = self.get_body_com("particle") - self.get_body_com("target")
 
         reward_dist = - np.linalg.norm(vec_dist)  # particle to target
@@ -45,7 +43,7 @@ class PointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     def viewer_setup(self):
         self.viewer.cam.trackbodyid = -1
-        self.viewer.cam.distance = 4.0
+        self.viewer.cam.distance = 1.0
 
     def reset_model(self):
         qpos = self.init_qpos
@@ -64,11 +62,27 @@ class PointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def plot_trajs(self, *args, **kwargs):
         pass
 
-    def log_diagnostics(self, paths):
-        rew_dist = np.array([traj['env_infos']['reward_dist'] for traj in paths])
-        rew_ctrl = np.array([traj['env_infos']['reward_ctrl'] for traj in paths])
 
-        logger.record_tabular('AvgObjectToGoalDist', -np.mean(rew_dist.mean()))
-        logger.record_tabular('AvgControlCost', -np.mean(rew_ctrl.mean()))
-        logger.record_tabular('AvgMinToGoalDist', np.mean(np.min(-rew_dist, axis=1)))
 
+if __name__ == "__main__":
+    from getkey import getkey
+    env = PointMazeEnv()
+    env.render()
+
+    while True:
+        key = getkey()
+        a = np.array([0.0,0.0])
+        if key == 'w':
+            a += np.array([0.0, 1.0])
+        elif key == 'a':
+            a += np.array([-1.0, 0.0])
+        elif key  == 's':
+            a += np.array([0.0, -1.0])
+        elif key  == 'd':
+            a += np.array([1.0, 0.0])
+        elif key  == 'q':
+            break
+        a *= 0.2
+        _, r, _, _ = env.step(a)
+        print('reward', r)
+        env.render()

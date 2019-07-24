@@ -1,4 +1,4 @@
-from inverse_rl.envs.dynamic_mjc.model_builder import MJCModel
+from irl_envs.envs.dynamic_mjc.model_builder import MJCModel
 import numpy as np
 
 

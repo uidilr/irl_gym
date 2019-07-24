@@ -1,6 +1,6 @@
 # Inverse RL
 
-Implementations for imitation learning / IRL algorithms in RLLAB
+Implementations of Gym Interface Environments used for Inverse Reinforcement Learning Paper
 
 Contains:
 - GAIL (https://arxiv.org/abs/1606.03476/pdf)
@@ -9,25 +9,15 @@ Contains:
 
 Setup
 ---
-This library requires:
-- rllab (https://github.com/openai/rllab)
-- Tensorflow
-
-Examples
----
-
-Running the Pendulum-v0 gym environment:
-
-1) Collect expert data
-```
-python scripts/pendulum_data_collect.py
+To install requirements
+```bash
+pip install -r requirements.txt
 ```
 
-You should get an "AverageReturn" of around -100 to -150
-
-2) Run imitation learning
+requirements.txt includes
 ```
-python scripts/pendulum_gcl.py
+matplotlib==2.2.3
+getkey==0.6.5
+gym==0.13.1
+numpy==1.16.1
 ```
-
-The "OriginalTaskAverageReturn" should reach around -100 to -150

@@ -1,10 +1,8 @@
 import numpy as np
 from gym import utils
 
-from inverse_rl.envs.env_utils import get_asset_xml
-from inverse_rl.envs.twod_mjc_env import TwoDEnv
-
-from rllab.misc import logger as logger
+from irl_envs.envs.env_utils import get_asset_xml
+from irl_envs.envs.twod_mjc_env import TwoDEnv
 
 INIT_POS = np.array([0.15,0.15])
 TARGET = np.array([0.15, -0.15])
@@ -34,6 +32,9 @@ class TwoDMaze(TwoDEnv, utils.EzPickle):
         done = self.episode_length >= self.max_episode_length
         return ob, reward, done, {'distance': dist}
 
+    def step(self, action):
+        return self._step(action)
+
     def reset_model(self):
         self.episode_length = 0
         qpos = self.init_qpos + self.np_random.uniform(size=self.model.nq, low=-0.01, high=0.01)
@@ -42,28 +43,19 @@ class TwoDMaze(TwoDEnv, utils.EzPickle):
         return self._get_obs()
 
     def _get_obs(self):
-        #return np.concatenate([self.model.data.qpos, self.model.data.qvel]).ravel()
-        return np.concatenate([self.model.data.qpos]).ravel() - INIT_POS
+        #return np.concatenate([self.data.qpos, self.data.qvel]).ravel()
+        return np.concatenate([self.data.qpos]).ravel() - INIT_POS
 
     def viewer_setup(self):
-        v = self.viewer
-        #v.cam.trackbodyid=0
-        #v.cam.distance = v.model.stat.extent
-
-    def log_diagnostics(self, paths):
-        rew_dist = np.array([traj['env_infos']['distance'] for traj in paths])
-
-        logger.record_tabular('AvgObjectToGoalDist', np.mean(rew_dist))
-        logger.record_tabular('MinAvgObjectToGoalDist', np.mean(np.min(rew_dist, axis=1)))
-
+        pass
 
 
 if __name__ == "__main__":
-    from inverse_rl.utils.getch import getKey
+    from getkey import getkey
     env = TwoDMaze(verbose=True)
 
     while True:
-        key = getKey()
+        key = getkey()
         a = np.array([0.0,0.0])
         if key == 'w':
             a += np.array([0.0, 1.0])
@@ -76,5 +68,6 @@ if __name__ == "__main__":
         elif key  == 'q':
             break
         a *= 0.2
-        env.step(a)
+        _, r, _, _ = env.step(a)
+        print('reward', r)
         env.render()

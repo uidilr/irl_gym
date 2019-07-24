@@ -25,5 +25,7 @@ def register_custom_envs():
     register(id='DisabledAnt-v0', entry_point='inverse_rl.envs.ant_env:CustomAntEnv',
              kwargs={'gear': 30, 'disabled': True})
 
-    register(id='VisualPointMaze-v0', entry_point='inverse_rl.envs.visual_pointmass:VisualPointMazeEnv',
+    register(id='VisualPointMazeRight-v0', entry_point='inverse_rl.envs.visual_pointmass:VisualPointMazeEnv',
+             kwargs={'sparse_reward': False, 'direction': 1})
+    register(id='VisualPointMazeLeft-v0', entry_point='inverse_rl.envs.visual_pointmass:VisualPointMazeEnv',
              kwargs={'sparse_reward': False, 'direction': 1})

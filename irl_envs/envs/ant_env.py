@@ -1,8 +1,7 @@
 import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
-from inverse_rl.envs.dynamic_mjc.model_builder import MJCModel
-from rllab.misc import logger
+from irl_envs.envs.dynamic_mjc.model_builder import MJCModel
 
 def ant_env(gear=150, eyes=True):
     mjcmodel = MJCModel('ant_maze')
@@ -196,7 +195,7 @@ class CustomAntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     A modified ant env with lower joint gear ratios so it flips less often and learns faster.
     """
     def __init__(self, max_timesteps=1000, disabled=False, gear=150):
-        #mujoco_env.MujocoEnv.__init__(self, 'ant.xml', 5)
+        # mujoco_env.MujocoEnv.__init__(self, 'ant.xml', 5)
         utils.EzPickle.__init__(self)
         self.timesteps = 0
         self.max_timesteps=max_timesteps
@@ -209,13 +208,13 @@ class CustomAntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             mujoco_env.MujocoEnv.__init__(self, f.name, 5)
 
     def _step(self, a):
-        vel = self.model.data.qvel.flat[0]
+        vel = self.data.qvel.flat[0]
         forward_reward = vel
         self.do_simulation(a, self.frame_skip)
 
         ctrl_cost = .01 * np.square(a).sum()
         contact_cost = 0.5 * 1e-3 * np.sum(
-            np.square(np.clip(self.model.data.cfrc_ext, -1, 1)))
+            np.square(np.clip(self.data.cfrc_ext, -1, 1)))
         state = self.state_vector()
         flipped = not (state[2] >= 0.2) 
         flipped_rew = -1 if flipped else 0
@@ -233,9 +232,9 @@ class CustomAntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
 
     def _get_obs(self):
         return np.concatenate([
-            self.model.data.qpos.flat[2:],
-            self.model.data.qvel.flat,
-            np.clip(self.model.data.cfrc_ext, -1, 1).flat,
+            self.data.qpos.flat[2:],
+            self.data.qvel.flat,
+            np.clip(self.data.cfrc_ext, -1, 1).flat,
         ])
 
     def reset_model(self):
@@ -248,16 +247,6 @@ class CustomAntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def viewer_setup(self):
         self.viewer.cam.distance = self.model.stat.extent * 0.5
 
-    def log_diagnostics(self, paths):
-        forward_rew = np.array([np.mean(traj['env_infos']['reward_forward']) for traj in paths])
-        reward_ctrl = np.array([np.mean(traj['env_infos']['reward_ctrl']) for traj in paths])
-        reward_cont = np.array([np.mean(traj['env_infos']['reward_contact']) for traj in paths])
-        reward_flip = np.array([np.mean(traj['env_infos']['reward_flipped']) for traj in paths])
-
-        logger.record_tabular('AvgRewardFwd', np.mean(forward_rew))
-        logger.record_tabular('AvgRewardCtrl', np.mean(reward_ctrl))
-        logger.record_tabular('AvgRewardContact', np.mean(reward_cont))
-        logger.record_tabular('AvgRewardFlipped', np.mean(reward_flip))
 
 
 if __name__ == "__main__":

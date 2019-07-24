@@ -1,11 +1,8 @@
 import numpy as np
-from rllab.core.serializable import Serializable
+from irl_envs.utils.serializable import Serializable
 
 from gym.envs.mujoco import mujoco_env
 from gym.spaces import Box
-
-from rllab.envs.base import Env
-from rllab.misc.overrides import overrides
 
 
 class MapConfig(Serializable):
@@ -99,7 +96,4 @@ class TwoDEnv(mujoco_env.MujocoEnv):
 
     def get_viewer(self):
         return self._get_viewer()
-
-    @overrides
-    def log_diagnostics(self, paths):
         pass
