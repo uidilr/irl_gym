@@ -1,25 +1,33 @@
+import cv2
 import numpy as np
 from gym import utils
+from gym.envs.mujoco import mujoco_env
+from gym.spaces import Box
 
-from irl_envs.envs.env_utils import get_asset_xml
-from irl_envs.envs.twod_mjc_env import TwoDEnv
+from irl_gym.envs.env_utils import get_asset_xml
 
 INIT_POS = np.array([0.15,0.15])
 TARGET = np.array([0.15, -0.15])
 DIST_THRESH = 0.12
 
-class TwoDMaze(TwoDEnv, utils.EzPickle):
-    def __init__(self, verbose=False):
+
+class VisualTwoDMaze(mujoco_env.MujocoEnv, utils.EzPickle):
+    def __init__(self, verbose=False, width=64, height=64, grayscale=True):
         self.verbose = verbose
         self.max_episode_length = 200
         self.episode_length = 0
+        self.width = width
+        self.height = height
+        self.grayscale = grayscale
         utils.EzPickle.__init__(self)
-        TwoDEnv.__init__(self, get_asset_xml('twod_maze.xml'), 2, xbounds=[-0.3,0.3], ybounds=[-0.3,0.3])
+        super().__init__(get_asset_xml('twod_maze.xml'), frame_skip=2)
 
-    def _step(self, a):
+        self.observation_space = Box(0, 1, shape=(width, height, 3))
+
+    def step(self, a):
         self.do_simulation(a, self.frame_skip)
-        ob = self._get_obs()
-        pos = ob[0:2]
+        state = self._get_state()
+        pos = state[0:2]
         dist = np.sum(np.abs(pos-TARGET)) #np.linalg.norm(pos - TARGET)
         reward = - (dist)
 
@@ -30,10 +38,9 @@ class TwoDMaze(TwoDEnv, utils.EzPickle):
             print(pos, reward)
         self.episode_length += 1
         done = self.episode_length >= self.max_episode_length
-        return ob, reward, done, {'distance': dist}
 
-    def step(self, action):
-        return self._step(action)
+        ob = self._get_obs()
+        return ob, reward, done, {'distance': dist}
 
     def reset_model(self):
         self.episode_length = 0
@@ -42,17 +49,30 @@ class TwoDMaze(TwoDEnv, utils.EzPickle):
         self.set_state(qpos, qvel)
         return self._get_obs()
 
-    def _get_obs(self):
-        #return np.concatenate([self.data.qpos, self.data.qvel]).ravel()
+    def _get_state(self):
         return np.concatenate([self.data.qpos]).ravel() - INIT_POS
 
+    def _get_obs(self):
+        viewer = self._get_viewer(mode='human')
+        viewer.render()
+        window_context = viewer.opengl_context
+        width, height = window_context._width, window_context._height
+        image = self.render(mode='rgb_array', width=width, height=height)
+
+        if self.grayscale:
+            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+        image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_AREA)
+        image = image.astype(np.float32)/255.0
+        return image
+
     def viewer_setup(self):
-        pass
+        self.viewer.cam.trackbodyid = -1
+        self.viewer.cam.distance = 1.0
 
 
 if __name__ == "__main__":
     from getkey import getkey
-    env = TwoDMaze(verbose=True)
+    env = VisualTwoDMaze()
 
     while True:
         key = getkey()
@@ -68,6 +88,5 @@ if __name__ == "__main__":
         elif key  == 'q':
             break
         a *= 0.2
-        _, r, _, _ = env.step(a)
-        print('reward', r)
-        env.render()
+        o, r,_,_ = env.step(a)
+        print(r)

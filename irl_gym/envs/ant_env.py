@@ -1,7 +1,7 @@
 import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
-from irl_envs.envs.dynamic_mjc.model_builder import MJCModel
+from irl_gym.envs.dynamic_mjc.model_builder import MJCModel
 
 def ant_env(gear=150, eyes=True):
     mjcmodel = MJCModel('ant_maze')
@@ -207,7 +207,7 @@ class CustomAntEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         with model.asfile() as f:
             mujoco_env.MujocoEnv.__init__(self, f.name, 5)
 
-    def _step(self, a):
+    def step(self, a):
         vel = self.data.qvel.flat[0]
         forward_reward = vel
         self.do_simulation(a, self.frame_skip)

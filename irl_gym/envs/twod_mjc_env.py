@@ -1,5 +1,5 @@
 import numpy as np
-from irl_envs.utils.serializable import Serializable
+from irl_gym.utils.serializable import Serializable
 
 from gym.envs.mujoco import mujoco_env
 from gym.spaces import Box

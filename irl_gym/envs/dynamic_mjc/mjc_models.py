@@ -1,4 +1,4 @@
-from irl_envs.envs.dynamic_mjc.model_builder import MJCModel
+from irl_gym.envs.dynamic_mjc.model_builder import MJCModel
 import numpy as np
 
 

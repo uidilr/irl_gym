@@ -1,21 +1,12 @@
-import cv2
 import numpy as np
 from gym import utils
 from gym.envs.mujoco import mujoco_env
-from gym.spaces import Box
 
-from irl_envs.envs.dynamic_mjc.mjc_models import point_mass_maze
-from irl_envs.envs.env_utils import get_asset_xml
-
-INIT_POS = np.array([0.15,0.15])
-TARGET = np.array([0.15, -0.15])
-DIST_THRESH = 0.12
+from irl_gym.envs.dynamic_mjc.mjc_models import point_mass_maze
 
 
-class VisualPointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
-    def __init__(self, direction=1, maze_length=0.6,
-                 sparse_reward=False, no_reward=False, episode_length=100, grayscale=True,
-                 width=64, height=64):
+class PointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
+    def __init__(self, direction=1, maze_length=0.6, sparse_reward=False, no_reward=False, episode_length=100):
         utils.EzPickle.__init__(self)
         self.sparse_reward = sparse_reward
         self.no_reward = no_reward
@@ -23,20 +14,11 @@ class VisualPointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.direction = direction
         self.length = maze_length
 
-        self.width = width
-        self.height = height
-        self.grayscale=grayscale
-
         self.episode_length = 0
 
         model = point_mass_maze(direction=self.direction, length=self.length)
         with model.asfile() as f:
             mujoco_env.MujocoEnv.__init__(self, f.name, 5)
-
-        if self.grayscale:
-            self.observation_space = Box(0, 1, shape=(width, height))
-        else:
-            self.observation_space = Box(0, 1, shape=(width, height, 3))
 
     def step(self, a):
         vec_dist = self.get_body_com("particle") - self.get_body_com("target")
@@ -71,29 +53,21 @@ class VisualPointMazeEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         self.episode_length = 0
         return self._get_obs()
 
-    def _get_state(self):
+    def _get_obs(self):
         return np.concatenate([
             self.get_body_com("particle"),
             #self.get_body_com("target"),
         ])
 
-    def _get_obs(self):
-        viewer = self._get_viewer(mode='human')
-        viewer.render()
-        window_context = viewer.opengl_context
-        width, height = window_context._width, window_context._height
-        image = self.render(mode='rgb_array', width=width, height=height)
+    def plot_trajs(self, *args, **kwargs):
+        pass
 
-        if self.grayscale:
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-        image = cv2.resize(image, (self.width, self.height), interpolation=cv2.INTER_AREA)
-        image = image.astype(np.float32)/255.0
-        return image
 
 
 if __name__ == "__main__":
     from getkey import getkey
-    env = VisualPointMazeEnv()
+    env = PointMazeEnv()
+    env.render()
 
     while True:
         key = getkey()
@@ -109,5 +83,6 @@ if __name__ == "__main__":
         elif key  == 'q':
             break
         a *= 0.2
-        o, r,_,_ = env.step(a)
-        print(r)
+        _, r, _, _ = env.step(a)
+        print('reward', r)
+        env.render()
