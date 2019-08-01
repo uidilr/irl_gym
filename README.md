@@ -32,7 +32,7 @@ PointMazeRight-v0
 CustomAnt-v0
 ![CustomAnt](./imgs/ant.png)
 
-DisabledAnd-v0
+DisabledAnt-v0
 ![CustomAnt](./imgs/disabled_ant.png)
 
 This repository registers environments below
